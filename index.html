@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="icon" href="https://www.airwallex.com/favicon.ico">
+  <title>Airwallex Checkout Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://checkout.airwallex.com/assets/elements.bundle.min.js"></script>
+  <style>
+    :root {
+      --bg-top: #f2f9ff;
+      --bg-bottom: #e9eef7;
+      --surface: rgba(255, 255, 255, 0.86);
+      --surface-border: rgba(18, 55, 94, 0.14);
+      --text-main: #10213b;
+      --text-muted: #4c6381;
+      --primary: #0a7fcf;
+      --primary-dark: #0868aa;
+      --shadow: 0 22px 55px rgba(10, 68, 120, 0.16);
+      --radius-lg: 18px;
+      --radius-md: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Outfit", "Segoe UI", sans-serif;
+      min-height: 100vh;
+      margin: 0;
+      color: var(--text-main);
+      background:
+        radial-gradient(circle at 20% 15%, rgba(10, 127, 207, 0.18), transparent 38%),
+        radial-gradient(circle at 85% 10%, rgba(0, 181, 173, 0.16), transparent 36%),
+        linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+      display: grid;
+      place-items: center;
+      padding: 28px 16px;
+    }
+
+    .panel {
+      width: 100%;
+      max-width: 560px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--surface-border);
+      background: var(--surface);
+      backdrop-filter: blur(6px);
+      box-shadow: var(--shadow);
+      padding: 26px;
+      animation: fadeInUp 0.5s ease-out;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1.55rem;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .subtitle {
+      margin: 8px 0 20px;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #1d365a;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid #bfd2ea;
+      font-family: "Outfit", "Segoe UI", sans-serif;
+      font-size: 0.94rem;
+      color: var(--text-main);
+      background: #ffffff;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(10, 127, 207, 0.15);
+    }
+
+    #card-container {
+      border: 1px solid #bfd2ea;
+      background: #ffffff;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      margin: 16px 0;
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+    }
+
+    #card-container > * {
+      width: 100%;
+    }
+
+    button {
+      padding: 12px 16px;
+      background: linear-gradient(135deg, var(--primary), #119cbf);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      width: 100%;
+      font-family: "Outfit", "Segoe UI", sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
+      box-shadow: 0 12px 24px rgba(10, 127, 207, 0.22);
+    }
+
+    button:hover {
+      filter: brightness(1.03);
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .divider {
+      margin: 20px 0;
+      border: 0;
+      border-top: 1px solid #d6e3f4;
+    }
+
+    #result {
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #f5f9ff;
+      border: 1px solid #d5e4f8;
+      color: #1b3458;
+      min-height: 43px;
+      display: flex;
+      align-items: center;
+      font-size: 0.93rem;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .panel {
+        padding: 20px;
+        border-radius: 16px;
+      }
+
+      h2 {
+        font-size: 1.35rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="panel">
+    <h2>Airwallex Payment Test</h2>
+    <p class="subtitle">Uji checkout kartu dengan Airwallex SDK pada mode demo.</p>
+
+    <label for="clientSecret">Client Secret</label>
+    <textarea id="clientSecret" placeholder="Paste client_secret di sini..."></textarea>
+
+    <button onclick="initPayment()">Init Payment</button>
+
+    <hr class="divider">
+
+    <div id="card-container"></div>
+
+    <button onclick="pay()">Bayar</button>
+
+    <p id="result"></p>
+  </main>
+
+  <script>
+    let cardElement;
+
+    async function initPayment() {
+      const clientSecret = document.getElementById('clientSecret').value;
+
+      if (!clientSecret) {
+        alert("Isi client_secret dulu!");
+        return;
+      }
+
+      await Airwallex.init({
+        env: "demo",
+        origin: window.location.origin
+      });
+
+      // Clear container dulu kalau re-init
+      document.getElementById('card-container').innerHTML = "";
+
+      cardElement = Airwallex.createElement('card');
+      cardElement.mount('card-container');
+
+      document.getElementById('result').innerText = "Form siap, silakan isi kartu.";
+    }
+
+    async function pay() {
+      const clientSecret = document.getElementById('clientSecret').value;
+      const resultEl = document.getElementById('result');
+
+      if (!cardElement) {
+        alert("Klik Init Payment dulu!");
+        return;
+      }
+
+      resultEl.innerText = "Processing...";
+
+      try {
+        const result = await Airwallex.confirmPaymentIntent({
+          element: cardElement,
+          client_secret: clientSecret
+        });
+
+        if (result.status === 'SUCCEEDED') {
+          resultEl.innerText = "✅ Payment Success!";
+        } else if (result.status === 'REQUIRES_ACTION') {
+          resultEl.innerText = "⚠️ Perlu autentikasi (3DS)";
+        } else {
+          resultEl.innerText = "❌ Payment Failed";
+        }
+
+        console.log(result);
+      } catch (err) {
+        console.error(err);
+        resultEl.innerText = "❌ Error: " + err.message;
+      }
+    }
+  </script>
+
+</body>
+</html>
