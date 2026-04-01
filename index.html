@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
   <link rel="icon" href="https://www.airwallex.com/favicon.ico">
   <title>Airwallex Checkout Test</title>
@@ -66,6 +66,35 @@
       font-size: 0.95rem;
     }
 
+    .view-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .view-switch button {
+      box-shadow: none;
+      background: #e7f1fe;
+      color: #17508a;
+      border: 1px solid #bfd2ea;
+    }
+
+    .view-switch button.active {
+      background: linear-gradient(135deg, var(--primary), #119cbf);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 10px 20px rgba(10, 127, 207, 0.2);
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
     label {
       display: block;
       margin-bottom: 8px;
@@ -76,7 +105,7 @@
 
     textarea {
       width: 100%;
-      min-height: 100px;
+      min-height: 90px;
       padding: 12px 14px;
       margin-bottom: 14px;
       border-radius: var(--radius-md);
@@ -86,6 +115,7 @@
       color: var(--text-main);
       background: #ffffff;
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      resize: vertical;
     }
 
     textarea:focus {
@@ -94,15 +124,26 @@
       box-shadow: 0 0 0 3px rgba(10, 127, 207, 0.15);
     }
 
-    #card-container {
+    #dropin-container {
+      background: #ffffff;
+      padding: 16px;
+      border-radius: var(--radius-md);
+      margin: 16px 0;
+      min-height: 100px;
       border: 1px solid #bfd2ea;
+      transition: all 0.3s ease;
+    }
+
+    #card-container {
       background: #ffffff;
       padding: 12px;
       border-radius: var(--radius-md);
       margin: 16px 0;
       min-height: 58px;
+      border: 1px solid #bfd2ea;
       display: flex;
       align-items: center;
+      transition: all 0.3s ease;
     }
 
     #card-container > * {
@@ -150,6 +191,8 @@
       display: flex;
       align-items: center;
       font-size: 0.93rem;
+      word-break: break-word;
+      line-height: 1.4;
     }
 
     @keyframes fadeInUp {
@@ -162,73 +205,112 @@
         transform: translateY(0);
       }
     }
-
-    @media (max-width: 640px) {
-      .panel {
-        padding: 20px;
-        border-radius: 16px;
-      }
-
-      h2 {
-        font-size: 1.35rem;
-      }
-    }
   </style>
 </head>
 <body>
   <main class="panel">
     <h2>Airwallex Payment Test</h2>
-    <p class="subtitle">Uji checkout kartu dengan Airwallex SDK pada mode demo.</p>
+    <p class="subtitle">Satu halaman untuk Card Only dan All Methods (Drop-in).</p>
 
-    <label for="clientSecret">Client Secret</label>
-    <textarea id="clientSecret" placeholder="Paste client_secret di sini..."></textarea>
+    <div class="view-switch">
+      <button id="tab-card" class="active" type="button" onclick="setView('card')">Card Only</button>
+      <button id="tab-dropin" type="button" onclick="setView('dropin')">All Methods (Drop-in)</button>
+    </div>
 
-    <button onclick="initPayment()">Init Payment</button>
+    <section id="view-card" class="view active">
+      <label for="cardClientSecret">Client Secret</label>
+      <textarea id="cardClientSecret" placeholder="Paste client_secret di sini..."></textarea>
+
+      <button onclick="initCardPayment()">Init Card Payment</button>
+
+      <div id="card-container">Silakan klik "Init Card Payment" untuk memuat...</div>
+
+      <button onclick="payCard()">Bayar (Card)</button>
+    </section>
+
+    <section id="view-dropin" class="view">
+      <label for="intentId">Intent ID</label>
+      <textarea id="intentId" placeholder="Paste intent_id (contoh: int_...)" style="min-height: 50px;"></textarea>
+
+      <label for="currency">Currency (Mata Uang)</label>
+      <textarea id="currency" placeholder="Contoh: USD, IDR, SGD..." style="min-height: 40px;">USD</textarea>
+
+      <label for="clientSecret">Client Secret</label>
+      <textarea id="clientSecret" placeholder="Paste client_secret di sini..."></textarea>
+
+      <button onclick="initDropinPayment()">Init Drop-in Payment</button>
+
+      <div id="dropin-container">Silakan klik "Init Drop-in Payment" untuk memuat...</div>
+
+      <button onclick="payDropin()">Bayar (Drop-in)</button>
+    </section>
 
     <hr class="divider">
 
-    <div id="card-container"></div>
-
-    <button onclick="pay()">Bayar</button>
-
-    <p id="result"></p>
+    <p id="result">Siap untuk memulai.</p>
   </main>
 
   <script>
+    let dropInElement;
     let cardElement;
 
-    async function initPayment() {
-      const clientSecret = document.getElementById('clientSecret').value;
+    function setView(viewType) {
+      const isCard = viewType === 'card';
+      document.getElementById('tab-card').classList.toggle('active', isCard);
+      document.getElementById('tab-dropin').classList.toggle('active', !isCard);
+      document.getElementById('view-card').classList.toggle('active', isCard);
+      document.getElementById('view-dropin').classList.toggle('active', !isCard);
+      document.getElementById('result').innerText = isCard
+        ? 'View Card aktif.'
+        : 'View Drop-in aktif.';
+    }
+
+    // Pelacak rahasia untuk menangkap pesan error dari dalam iframe Airwallex yang disembunyikan
+    window.addEventListener('message', (event) => {
+      if (event.origin.includes('airwallex.com') && event.data) {
+        console.log("Iframe Broadcast:", event.data);
+      }
+    });
+
+    async function initCardPayment() {
+      const clientSecret = document.getElementById('cardClientSecret').value.trim();
+      const resultEl = document.getElementById('result');
 
       if (!clientSecret) {
-        alert("Isi client_secret dulu!");
+        resultEl.innerHTML = "⚠️ Isi Client Secret terlebih dahulu!";
         return;
       }
 
-      await Airwallex.init({
-        env: "demo",
-        origin: window.location.origin
-      });
+      resultEl.innerHTML = "Membangun form kartu...";
 
-      // Clear container dulu kalau re-init
-      document.getElementById('card-container').innerHTML = "";
+      try {
+        await Airwallex.init({
+          env: "demo",
+          origin: window.location.origin
+        });
 
-      cardElement = Airwallex.createElement('card');
-      cardElement.mount('card-container');
+        const container = document.getElementById('card-container');
+        container.innerHTML = "";
 
-      document.getElementById('result').innerText = "Form siap, silakan isi kartu.";
+        cardElement = Airwallex.createElement('card');
+        cardElement.mount('card-container');
+        resultEl.innerHTML = "✅ Form kartu siap.";
+      } catch (err) {
+        console.error(err);
+        resultEl.innerHTML = "❌ Gagal memuat form kartu: " + err.message;
+      }
     }
 
-    async function pay() {
-      const clientSecret = document.getElementById('clientSecret').value;
+    async function payCard() {
+      const clientSecret = document.getElementById('cardClientSecret').value.trim();
       const resultEl = document.getElementById('result');
 
       if (!cardElement) {
-        alert("Klik Init Payment dulu!");
+        resultEl.innerHTML = "⚠️ Klik 'Init Card Payment' terlebih dahulu!";
         return;
       }
 
-      resultEl.innerText = "Processing...";
+      resultEl.innerHTML = "Processing card payment...";
 
       try {
         const result = await Airwallex.confirmPaymentIntent({
@@ -237,20 +319,100 @@
         });
 
         if (result.status === 'SUCCEEDED') {
-          resultEl.innerText = "✅ Payment Success!";
+          resultEl.innerHTML = "✅ Card Payment Success!";
         } else if (result.status === 'REQUIRES_ACTION') {
-          resultEl.innerText = "⚠️ Perlu autentikasi (3DS)";
+          resultEl.innerHTML = "⚠️ Card butuh autentikasi lanjutan (3DS)";
         } else {
-          resultEl.innerText = "❌ Payment Failed";
+          resultEl.innerHTML = "❌ Card Payment Failed";
         }
-
-        console.log(result);
       } catch (err) {
         console.error(err);
-        resultEl.innerText = "❌ Error: " + err.message;
+        resultEl.innerHTML = "❌ Error: " + err.message;
+      }
+    }
+
+    async function initDropinPayment() {
+      const intentId = document.getElementById('intentId').value.trim();
+      const clientSecret = document.getElementById('clientSecret').value.trim();
+      const currencyCode = document.getElementById('currency').value.trim().toUpperCase();
+      const resultEl = document.getElementById('result');
+
+      if (!intentId || !clientSecret || !currencyCode) {
+        resultEl.innerHTML = "⚠️ Isi Intent ID, Currency, dan Client Secret terlebih dahulu!";
+        return;
+      }
+
+      resultEl.innerHTML = "Membangun tampilan... Mohon tunggu.";
+
+      try {
+        await Airwallex.init({
+          env: "prod", // demo or prod
+          origin: window.location.origin
+        });
+
+        const container = document.getElementById('dropin-container');
+        container.innerHTML = "";
+
+        // Menambahkan parameter 'currency' dan 'layout' sesuai dokumentasi
+        dropInElement = Airwallex.createElement('dropIn', {
+          intent_id: intentId,
+          client_secret: clientSecret,
+          currency: currencyCode,
+          layout: {
+            type: "accordion" // atau "tab"
+          }
+        });
+
+        // Jika form berhasil di-load
+        dropInElement.on('ready', () => {
+          resultEl.innerHTML = "✅ Form siap! Jika Anda tidak melihat form, berarti akun Demo Anda belum mengaktifkan metode pembayaran apa pun untuk mata uang ini.";
+        });
+
+        // Jika ada error spesifik dari form
+        dropInElement.on('error', (event) => {
+          console.error("Airwallex Element Error:", event);
+          resultEl.innerHTML = "❌ Gagal memuat UI: " + (event.detail?.message || JSON.stringify(event));
+        });
+        
+        dropInElement.mount('dropin-container');
+
+      } catch (err) {
+        console.error(err);
+        resultEl.innerHTML = "❌ Gagal memuat UI: " + err.message;
+      }
+    }
+
+    async function payDropin() {
+      const intentId = document.getElementById('intentId').value.trim();
+      const clientSecret = document.getElementById('clientSecret').value.trim();
+      const resultEl = document.getElementById('result');
+
+      if (!dropInElement) {
+        resultEl.innerHTML = "⚠️ Klik 'Init Payment' terlebih dahulu!";
+        return;
+      }
+
+      resultEl.innerHTML = "Processing...";
+
+      try {
+        const result = await Airwallex.confirmPaymentIntent({
+          element: dropInElement,
+          id: intentId,
+          client_secret: clientSecret
+        });
+
+        if (result.status === 'SUCCEEDED') {
+          resultEl.innerHTML = "✅ Payment Success!";
+        } else if (result.status === 'REQUIRES_ACTION') {
+          resultEl.innerHTML = "⚠️ Perlu autentikasi lanjutan (3DS)";
+        } else {
+          resultEl.innerHTML = "❌ Payment Failed";
+        }
+      } catch (err) {
+        console.error(err);
+        resultEl.innerHTML = "❌ Error: " + err.message;
       }
     }
   </script>
-
 </body>
 </html>
