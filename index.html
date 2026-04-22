@@ -232,9 +232,6 @@
       <label for="intentId">Intent ID</label>
       <textarea id="intentId" placeholder="Paste intent_id (contoh: int_...)" style="min-height: 50px;"></textarea>
 
-      <label for="currency">Currency (Mata Uang)</label>
-      <textarea id="currency" placeholder="Contoh: USD, IDR, SGD..." style="min-height: 40px;">USD</textarea>
-
       <label for="clientSecret">Client Secret</label>
       <textarea id="clientSecret" placeholder="Paste client_secret di sini..."></textarea>
 
@@ -332,10 +329,9 @@
     async function initDropinPayment() {
       const intentId = document.getElementById('intentId').value.trim();
       const clientSecret = document.getElementById('clientSecret').value.trim();
-      const currencyCode = document.getElementById('currency').value.trim().toUpperCase();
       const resultEl = document.getElementById('result');
 
-      if (!intentId || !clientSecret || !currencyCode) {
+      if (!intentId || !clientSecret) {
         resultEl.innerHTML = "⚠️ Isi Intent ID, Currency, dan Client Secret terlebih dahulu!";
         return;
       }
@@ -355,7 +351,6 @@
         dropInElement = Airwallex.createElement('dropIn', {
           intent_id: intentId,
           client_secret: clientSecret,
-          currency: currencyCode,
           applePayRequestOptions: {
             countryCode: 'US',
             buttonType: 'buy',
