@@ -241,8 +241,6 @@
       <button onclick="initDropinPayment()">Init Drop-in Payment</button>
 
       <div id="dropin-container">Silakan klik "Init Drop-in Payment" untuk memuat...</div>
-
-      <button onclick="payDropin()">Bayar (Drop-in)</button>
     </section>
 
     <hr class="divider">
@@ -384,38 +382,6 @@
       } catch (err) {
         console.error(err);
         resultEl.innerHTML = "❌ Gagal memuat UI: " + err.message;
-      }
-    }
-
-    async function payDropin() {
-      const intentId = document.getElementById('intentId').value.trim();
-      const clientSecret = document.getElementById('clientSecret').value.trim();
-      const resultEl = document.getElementById('result');
-
-      if (!dropInElement) {
-        resultEl.innerHTML = "⚠️ Klik 'Init Payment' terlebih dahulu!";
-        return;
-      }
-
-      resultEl.innerHTML = "Processing...";
-
-      try {
-        const result = await Airwallex.confirmPaymentIntent({
-          element: dropInElement,
-          id: intentId,
-          client_secret: clientSecret
-        });
-
-        if (result.status === 'SUCCEEDED') {
-          resultEl.innerHTML = "✅ Payment Success!";
-        } else if (result.status === 'REQUIRES_ACTION') {
-          resultEl.innerHTML = "⚠️ Perlu autentikasi lanjutan (3DS)";
-        } else {
-          resultEl.innerHTML = "❌ Payment Failed";
-        }
-      } catch (err) {
-        console.error(err);
-        resultEl.innerHTML = "❌ Error: " + err.message;
       }
     }
   </script>
