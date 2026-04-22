@@ -358,6 +358,11 @@
           intent_id: intentId,
           client_secret: clientSecret,
           currency: currencyCode,
+          applePayRequestOptions: {
+            countryCode: 'US',
+            buttonType: 'buy',
+            buttonColor: 'white-with-line'
+          },
           layout: {
             type: "accordion" // atau "tab"
           }
